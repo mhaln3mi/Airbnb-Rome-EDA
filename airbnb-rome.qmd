@@ -1,0 +1,290 @@
+---
+title: "Airbnb Rome EDA"
+format:
+  html:
+    code-fold: true
+kernel: python3
+---
+
+# Introduction:
+
+In this report we will be analyzing Rome Airbnb properties dataset from inside airbnb and try to analyze it to find what variables influences the income generted by the property.
+
+<br>
+
+### Why Rome?
+
+We choose Rome because it’s one of the most visited cities by tourists in Europe. Thanks to the rich history, amazing food, and the relatively cheaper prices compared to other major european cities. All of these factors make Rome one of the most sought after investments in the hospitality and tourism industry.
+
+<br>
+
+### About the dataset source
+
+We got our dataset from (inside airbnb)[http://insideairbnb.com/get-the-data/]. Inside Airbnb is a project that provides data and advocacy about Airbnb's impact on residential communities. They provide data and information to empower communities to understand, decide and control the role of renting residential homes to tourists.
+
+<br>
+
+### Data dictionary
+
+| Variable      | Description |
+| ----------- | ----------- |
+| host_name    | Name of the host.       |
+| neighbourhood   | Name of the neighbourhood.       |
+| latitude  | Used to make an interactive map.        |
+| longitude   | Used to make an interactive map.        |
+| room_type   | Entire apt, private room, hotel room.        |
+| Price   | Price in Euro.         |
+| minimum_nights   | minimum number of night stay for the listing.       |
+| number_of_reviews   | The number of reviews the listing has.        |
+| last_review   | The date of the last/newest review.      |
+| availability_365   | The availability of the listing x days in the future.        |
+| number_of_reviews_ltm   | The number of reviews the listing has (in the last 12 months).        |
+| amenities   | A list of amenities in the listing. 
+
+<br>
+
+# Data Munging
+
+First we will be doing basic data cleaning
+
+<br>
+
+### Importing libraries and Data
+
+```{python}
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+import folium
+from folium.plugins import MarkerCluster
+from folium import plugins
+from folium.plugins import FastMarkerCluster
+from folium.plugins import HeatMap
+from ast import literal_eval
+from plotly.subplots import make_subplots
+
+
+df = pd.read_csv('data/listings.csv')
+df2 = pd.read_csv('data/listings-detailed.csv')
+
+df.head(5)
+
+```
+
+<br>
+
+### Cleaning Data
+
+First we checked for duplicates and null values
+
+```{python}
+df.duplicated().sum()
+
+df.isnull().sum()
+
+```
+
+<br>
+
+there was no duplicates but we have null values in `host_id`, `host_name`, `neighbourhood_group`, `licence` and .
+We decided to drop the missing values for all columns except reviews.
+
+<br>
+
+Second we used ```apply```  to convert the `price` in the dataset to float. We also decided to drop `price` values of 0 and bigger than 50000 as there was nothing interesting to investigate there and they will miss up our result.
+
+
+```{python}
+df2["price"]=df2["price"].apply(lambda x : float(x[1:].replace(",","")))
+df2.drop(df2[df2["price"]>=50000].index,axis=0,inplace=True)
+df2.drop(df2[df2["price"]==0].index,axis=0,inplace=True)
+```
+
+<br>
+
+The ```amenities``` column has amenities written as a list inside a string, so we will use ```literal_eval``` from ```ast``` to turn it into lists of strings, then use ```explode``` from ```pandas``` to give each element of the list it's own row, and lastly we will perform a one hot encoding using ```crosstab```
+
+```{python}
+df2["amenities"] = df2["amenities"].apply(literal_eval)
+exploded_df2 = df2.explode('amenities')
+df_new = pd.crosstab(exploded_df2['id'],exploded_df2['amenities']).rename_axis(None,axis=1).add_prefix("amenities_")
+df_new
+```
+
+<br>
+
+
+```{python}
+df = pd.concat([df.set_index("id"), df_new], axis=1, join='inner').reset_index()
+df = df.join(df2[["review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin", "review_scores_communication", "review_scores_location", "review_scores_value"]])
+```
+
+<br>
+
+# EDA
+
+
+<br>
+
+### Listings by neighbourhood
+
+Here we want to see how many listings we have per `neighbourhood`
+
+```{python}
+dist_plt = df['neighbourhood'].value_counts().nlargest(5).plot.bar()
+plt.xticks(rotation = 30)
+```
+
+We can see from this fig above that most of the listings in our dataset are located at ```I Centro Storico```.
+
+<br>
+
+Now lets see how these listing appear on a map using ```folium``` library
+
+```{python}
+Long=12.6
+Lat=41.8
+locations = list(zip(df.latitude, df.longitude))
+
+map1 = folium.Map(location=[Lat,Long], zoom_start=10.5)
+FastMarkerCluster(data=locations).add_to(map1)
+map1
+```
+
+As we can see, most of the listings are located in the city center.
+
+<br>
+
+
+Next we want to see the distribution of listings type in the dataset
+
+```{python}
+df['room_type'].value_counts().plot(kind = 'bar', color = ['g', 'r', 'b', 'y'])
+plt.title('Listings type count')
+plt.xticks(rotation = 30)
+```
+
+The plot above shows us that most listings are of type Entire Apt, followed by Private room and Hotel room.
+
+<br>
+
+Lets also see what's the median price per neighbourhood
+
+
+```{python}
+mode_dist_plt = df.groupby('neighbourhood')['price'].median().nlargest(5).plot.bar()
+plt.title('Median price per neighbourhood (Top 5)')
+plt.xticks(rotation = 30)
+```
+
+The highest median price is in ```I Centro Storico```, followed by ```XIII Aurelia```.
+
+<br>
+
+Now lets check for mean price per neighbourhood
+
+
+```{python}
+mean_dist_plt = df.groupby('neighbourhood')['price'].mean().nlargest(5).plot.bar()
+plt.title('Mean price per neighbourhood (Top 5)')
+plt.xticks(rotation = 30)
+```
+
+
+The highest mean price is in ```XIII Aurelia```, followed by ```I Centro Storico```.  
+
+<br>
+
+
+### Amenities and Price
+
+
+What are the most frequent amenities in Roma listings?
+
+```{python}
+amenities = {}
+for c in df.columns:
+	if "amenities" in c: 
+		amenities[c] = df[c].value_counts()[1]
+amenities_list = sorted(amenities, key=amenities.get, reverse=True)[:10]
+amenities = {c:df[c].value_counts()[1] for c in amenities_list}
+fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Most Frequent Amenities", labels={
+	"y": "Count",
+	"x": "Amenities"
+})
+fig.show()
+```
+
+
+<br>
+
+
+```{python}
+amenities = {}
+for c in df.columns:
+	if "amenities" in c: 
+		amenities[c] = df[c].value_counts()[1]
+amenities_list = sorted(amenities, key=amenities.get, reverse=True)[:10]
+amenities = {c:df.groupby(c)['price'].mean()[1] for c in amenities_list}
+fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Average Price for the Most Frequent Amenities", labels={
+	"y": "Average Price",
+	"x": "Amenities"
+})
+fig.show()
+```
+
+
+<br>
+
+
+```{python}
+amenities = {}
+
+for c in df.columns:
+	if "amenities" in c: 
+		amenities[c] = df.groupby(c)['price'].mean()[1]
+
+amenities_list = sorted(amenities, key=amenities.get, reverse=True)[:10]
+amenities = {c:df.groupby(c)['price'].mean()[1] for c in amenities_list}
+amenities_count = {c:df[c].value_counts()[1] for c in amenities_list}
+
+fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Average Price for the Most Expnsive Amenities", labels={
+	"y": "Average Price",
+	"x": "Amenities"
+})
+
+fig.show()
+```
+
+
+<br>
+
+
+```{python}
+amenities = {}
+
+for c in df.columns:
+	if "amenities" in c: 
+		amenities[c] = df.groupby(c)['price'].mean()[1]
+
+amenities_list = sorted(amenities, key=amenities.get, reverse=True)[:10]
+amenities_count = {c:df[c].value_counts()[1] for c in amenities_list}
+
+fig = px.bar(x = amenities_count.keys(), y = amenities_count.values(), title = "The Distribution of the Most Expnsive Amenities", labels={
+	"y": "Count",
+	"x": "Amenities"
+})
+
+fig.show()
+```
+
+
+
+
+```{python}
+
+```
