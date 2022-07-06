@@ -20,7 +20,7 @@ We choose Rome because it’s one of the most visited cities by tourists in Euro
 
 ### About the dataset source
 
-We got our dataset from (inside airbnb)[http://insideairbnb.com/get-the-data/]. Inside Airbnb is a project that provides data and advocacy about Airbnb's impact on residential communities. They provide data and information to empower communities to understand, decide and control the role of renting residential homes to tourists.
+We got our dataset from [inside airbnb](http://insideairbnb.com/get-the-data/). Inside Airbnb is a project that provides data and advocacy about Airbnb's impact on residential communities. They provide data and information to empower communities to understand, decide and control the role of renting residential homes to tourists.
 
 <br>
 
@@ -112,7 +112,6 @@ The ```amenities``` column has amenities written as a list inside a string, so w
 df2["amenities"] = df2["amenities"].apply(literal_eval)
 exploded_df2 = df2.explode('amenities')
 df_new = pd.crosstab(exploded_df2['id'],exploded_df2['amenities']).rename_axis(None,axis=1).add_prefix("amenities_")
-df_new
 ```
 
 <br>
@@ -283,8 +282,521 @@ fig.show()
 ```
 
 
+<br>
+
+
+### Distribution of Review's Rating Scores
+
 
 
 ```{python}
+for c in df.columns:
+	if "scores" in c:
+		df[c].fillna(df[c].mean(), inplace=True)
+```
+
+
+<br>
+
+
+```{python}
+rating_location_category = pd.cut(df.review_scores_location,bins=[1, 2, 3, 4, 5, 6], labels=["Terrible","Bad","Okay","Good", "Great"], right=False)
+df['rating_location_category'] = rating_location_category
+sns.countplot(x = rating_location_category)
+```
+
+
+<br>
+
+
+```{python}
+rating_category = pd.cut(df.review_scores_rating,bins=[1, 2, 3, 4, 5, 6],labels=["Terrible","Bad","Okay","Good", "Great"], right=False)
+df['rating_category'] = rating_category
+sns.countplot(x = rating_category)
+```
+
+
+<br>
+
+
+```{python}
+value_category = pd.cut(df.review_scores_value,bins=[1, 2, 3, 4, 5, 6],labels=["Terrible","Bad","Okay","Good", "Great"], right=False)
+df['value_category'] = value_category
+sns.countplot(x = value_category)
+```
+
+
+<br>
+
+### Does the rating score effect the price
+
+
+
+```{python}
+data = df.groupby("rating_category")["price"].mean()
+sns.barplot(x=data.index, y=data)
+```
+
+
+<br>
+
+
+#### what is the income of the past year and the expected income for the next 3 months?
+
+- More data cleaning
+
+
+```{python}
+romeListings = df2.copy()
+romeListings.at[19678,"minimum_minimum_nights"]=7
+romeListings.drop(14443,inplace=True)
+romeListings.drop(7022,inplace=True)
+romeListings.at[5888,"minimum_minimum_nights"]=3
+romeListings.drop(7250,inplace=True)
+romeListings.at[11454,"minimum_minimum_nights"]=5
+romeListings.at[20421,"price"]=121.51
+romeListings.at[23230,"price"]=90
+romeListings.at[9646,"price"]=92.73
+romeListings.at[4737,"minimum_minimum_nights"]=3
+romeListings.drop(romeListings[romeListings["price"]==0].index,inplace=True)
 
 ```
+
+
+<br>
+
+
+- add min_booked_nights_past_12m and min_income_past_12m column to the dataset
+
+
+```{python}
+#the minimum estmtation of the number of booked nights of each listing in the last 12 month (current date = 2022-06-07)
+romeListings["min_booked_nights_past_12m"]=romeListings.apply(lambda x : x["number_of_reviews_ltm"]*x["minimum_nights_avg_ntm"],axis=1)
+
+#the minimum estmtation of the income of each listing in the last 12 month (current date = 2022-06-07)
+romeListings["min_income_past_12m"]=romeListings.apply(lambda x : x["min_booked_nights_past_12m"]*x["price"],axis=1)
+```
+
+
+<br>
+
+- add expected_booked_nights_coming_3m and expected_income_coming_3m column to the dataset
+
+
+```{python}
+#the expected number of booked nights of each listing in the next 3 month (current date = 2022-06-07)
+romeListings["expected_booked_nights_coming_3m"]=romeListings.apply(lambda x : 90-x["availability_90"],axis=1)
+
+#the expected income of each listing  in the next 3 month (current date = 2022-06-07)
+romeListings["expected_income_coming_3m"]=romeListings.apply(lambda x : (90-x["availability_90"])*x["price"],axis=1)
+```
+
+
+<br>
+
+#### what neighbourhoods have highest averege price ?
+
+
+```{python}
+temp=romeListings.groupby("neighbourhood_cleansed")["price"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "neighbourhood_cleansed", y = "price", title = "The highest price per night average of listings within a neighbourhood",color="neighbourhood_cleansed", labels={
+	"y": "Price",
+	"x": "Neighbourhood"
+})
+fig.show()
+```
+
+
+<br>
+
+
+#### what neighbourhoods have highest averege of booked nights over the next 3 month ?
+
+```{python}
+temp=romeListings.groupby("neighbourhood_cleansed")["expected_booked_nights_coming_3m"].mean().sort_values(ascending=False).head(50).reset_index()
+fig = px.bar(temp,x = "neighbourhood_cleansed", y = "expected_booked_nights_coming_3m", title = "The highest booked nights average of listings within a neighbourhood",color="neighbourhood_cleansed", labels={
+	"y": "Booked nights (next 3 months)",
+	"x": "Neighbourhood"
+},range_y=[0,90])
+fig.show()
+```
+
+
+<br>
+
+#### what room types have highest averege price ?
+
+```{python}
+temp=romeListings.groupby("room_type")["price"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "room_type", y = "price", title = "The highest price per night average of listings of a room type  ",color="room_type", labels={
+	"y": "Price",
+	"x": "Room Type"
+})
+fig.show()
+```
+
+
+<br>
+
+#### what room types have highest averege of booked nights over the next 3 month ?
+
+
+```{python}
+temp=romeListings.groupby("room_type")["expected_booked_nights_coming_3m"].mean().sort_values(ascending=False).reset_index()
+fig = px.bar(temp,x = 'room_type', y = "expected_booked_nights_coming_3m", title = "The highest booked nights average of listings of a room type",color="room_type", labels={
+	"y": "Booked nights (next 3 months)",
+	"x": "Room Type"
+},range_y=[0,90])
+fig.show()
+```
+
+
+<br>
+
+#### what (room type ,neighbourhood) combinations have the highest averege booked nights ?
+
+
+```{python}
+nBookedNightinNigh=romeListings.groupby(["room_type","neighbourhood_cleansed"])["expected_booked_nights_coming_3m"].agg(["mean","count"])
+temp=nBookedNightinNigh[nBookedNightinNigh["count"]>11]["mean"].sort_values(ascending=False).head(5)
+fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The highest booked nights average of listings for every (Room Type,Neighbourhood) combination", labels={
+	"y": "Booked nights (next 3 months)",
+	"x": "(Room Type,Neighbourhood)"
+},range_y=[0,90])
+fig.show()
+
+```
+
+
+<br>
+
+#### what neighbourhoods have highest minumam income average for the past 12 months ?
+
+```{python}
+
+temp=romeListings.groupby("neighbourhood_cleansed")["min_income_past_12m"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "neighbourhood_cleansed", y = "min_income_past_12m", title = "The highest minimum income of listings within a Neighbourhood",color="neighbourhood_cleansed", labels={
+	"y": "average minimum income of listings (past 12 months)",
+	"x": "Neighbourhood"
+})
+
+fig.show()
+```
+
+
+<br>
+
+#### what neighbourhoods with the highest expected income average for the next 3 months ?
+
+
+```{python}
+temp= romeListings.groupby("neighbourhood_cleansed")["expected_income_coming_3m"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "neighbourhood_cleansed", y = "expected_income_coming_3m", title = "The highest expected income of listings within a Neighbourhood",color="neighbourhood_cleansed", labels={
+	"y": "average expected income of listings (next 3 months)",
+	"x": "Neighbourhood"
+})
+
+fig.show()
+```
+
+
+<br>
+
+#### what room types have highest minumam income average for the past 12 months ?
+
+
+```{python}
+temp=romeListings.groupby("room_type")["min_income_past_12m"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "room_type", y = "min_income_past_12m", title = "The highest minimum income of listings based on room type",color="room_type", labels={
+	"y": "average minimum income of listings (past 12 months)",
+	"x": "Room Type"
+})
+
+fig.show()
+```
+
+
+<br>
+
+#### what room types have highest expected income average for the next 3 months ?
+
+```{python}
+temp=romeListings.groupby("room_type")["expected_income_coming_3m"].mean().sort_values(ascending=False).head(5).reset_index()
+fig = px.bar(temp,x = "room_type", y = "expected_income_coming_3m", title = "The highest expected income of listings based on room type",color="room_type", labels={
+	"y": "average expected income of listings (next 3 months)",
+	"x": "Room Type"
+})
+
+fig.show()
+```
+
+
+<br>
+
+#### what (room type ,neighbourhood) combinations have the highest averege income ?
+
+```{python}
+nBookedNightinNigh=romeListings.groupby(["room_type","neighbourhood_cleansed"])["expected_income_coming_3m"].agg(["mean","count"])
+temp=nBookedNightinNigh[nBookedNightinNigh["count"]>11]["mean"].sort_values(ascending=False).head(5)
+fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The highest income average of listings for every (Room Type,Neighbourhood) combination", labels={
+	"y": "average income (next 3 months)",
+	"x": "(Room Type,Neighbourhood)"
+},)
+fig.show()
+```
+
+
+<br>
+
+
+### does the host's account appearance effects the listing income ?
+
+```{python}
+temp=romeListings.groupby("host_has_profile_pic")["expected_income_coming_3m"].mean().reset_index()
+fig = px.bar(temp,x = ["No","Yes"], y = "expected_income_coming_3m", title = "",color=["No","Yes"], labels={
+	"y": "average income (next 3 months)",
+	"x": "host has a profile pic ?"
+})
+fig.show()
+```
+
+
+
+
+<br>
+
+
+
+```{python}
+temp= romeListings.groupby("host_identity_verified")["expected_income_coming_3m"].mean().reset_index()
+fig = px.bar(temp,x = ["No","Yes"], y = "expected_income_coming_3m", title = "",color=["No","Yes"], labels={
+	"y": "average income (next 3 months)",
+	"x": "is the host identity verified ?"
+},)
+fig.show()
+```
+
+
+<br>
+
+
+```{python}
+temp= romeListings.groupby("instant_bookable")["expected_income_coming_3m"].mean()
+fig = px.bar(temp,x = ["No","Yes"], y = "expected_income_coming_3m", title = "",color=["No","Yes"], labels={
+	"y": "average income (next 3 months)",
+	"x": "can be booked instantly ?"
+},)
+fig.show()
+```
+
+
+<br>
+
+#### does the response time effects the the densisty of the number of the booked nights ?
+
+```{python}
+f, axes = plt.subplots(2, 2, figsize=(20,8))
+ax = sns.kdeplot(romeListings[romeListings["host_response_time"]=="a few days or more"]["expected_booked_nights_coming_3m"],x="expected_booked_nights_coming_3m",color="red", fill=True,ax=axes[0,0])
+ax = sns.kdeplot(romeListings[romeListings["host_response_time"]=="within a day"]["expected_booked_nights_coming_3m"],x="expected_booked_nights_coming_3m",color="green", fill=True,ax=axes[0,1])
+ax = sns.kdeplot(romeListings[romeListings["host_response_time"]=="within a few hours"]["expected_booked_nights_coming_3m"],x="expected_booked_nights_coming_3m",color="orange",  fill=True,ax=axes[1,0])
+ax = sns.kdeplot(romeListings[romeListings["host_response_time"]=="within an hour"]["expected_booked_nights_coming_3m"],x="expected_booked_nights_coming_3m",color="blue",  fill=True,ax=axes[1,1])
+```
+
+
+
+<br>
+
+### Bathrooms, Beds, Reviews and price
+
+```{python}
+eds = df2[[ 'price', 'number_of_reviews', ]]
+
+g = sns.pairplot(eds,
+                 aspect=1.2,
+                 diag_kws=dict(shade=True),
+                 diag_kind="kde", kind="reg")
+fig = g.fig 
+fig.subplots_adjust(top=0.93, wspace=0.3)
+fig.suptitle('Attributes Pairwise Plots', 
+              fontsize=14, fontweight='bold');
+
+sns.set(style="white")
+sns.relplot(x="price", y="bathrooms_text",
+            sizes=(40, 400), alpha=.8, palette="coolwarm",
+            height=10, data=df2)
+```
+
+
+
+<br>
+
+
+```{python}
+plt.figure(figsize=(15,8))
+sns.jointplot( x='number_of_reviews',y ='price',data = df2, kind = 'reg', color = 'pink' , space = 0.8, height = 9)
+plt.title('Number of reviews Against price', 
+              fontsize=12, fontweight='bold');
+```
+
+
+
+<br>
+
+
+```{python}
+sns.set(style="white")
+sns.relplot(x="room_type", y="price", size = 'beds',
+            sizes=(40, 400), alpha=.8, palette="coolwarm",
+            height=10, data=df2)
+```
+
+
+
+<br>
+
+
+```{python}
+# data = romeListings.groupby("rating_location_category")["min_income_past_12m"].mean().sort_values(ascending=False)
+# sns.barplot(x=data.index, y=data)
+# plt.title("The Average minimum income of listings based on location rating")
+# plt.xlabel("Rating")
+# plt.ylabel("average minimum income of listings (past 12 months)")
+# plt.show()
+```
+
+
+
+
+<br>
+
+### Does the Location Rating effect the minimum income of listings (past 12 months)
+
+```{python}
+romeListings[["rating_location_category", "rating_category", "value_category"]] = df[["rating_location_category", "rating_category", "value_category"]]
+
+ax = sns.relplot(data= romeListings, x="review_scores_location", y ="min_income_past_12m" ,alpha=0.25)
+plt.xticks([0, 1, 2, 3, 4, 5], ["0", "1", "2", "3", "4", "5"])
+plt.yscale("log")
+plt.title("The minimum income of listings based on location rating")
+plt.xlabel("Rating")
+plt.ylabel("average minimum income of listings (past 12 months)")
+plt.show()
+```
+
+
+
+<br>
+
+
+```{python}
+data = romeListings.groupby("rating_location_category")["min_income_past_12m"].mean().sort_values(ascending=False)
+sns.barplot(x=data.index, y=data)
+plt.title("The Average minimum income of listings based on location rating")
+plt.xlabel("Rating")
+plt.ylabel("average minimum income of listings (past 12 months)")
+plt.show()
+```
+
+
+
+<br>
+
+### Does the Location Rating effect the expected average income (next 3 months)
+
+```{python}
+data = romeListings.groupby("rating_location_category")["expected_income_coming_3m"].mean().sort_values(ascending=False)
+sns.barplot(x=data.index, y=data)
+plt.title("The Expected Income in 3 Months for Listings based on rating")
+plt.xlabel("Rating")
+plt.ylabel("average income (next 3 months)")
+plt.show()
+```
+
+
+
+<br>
+
+
+```{python}
+data = romeListings.groupby("rating_location_category")["expected_booked_nights_coming_3m"].mean().sort_values(ascending=False)
+sns.barplot(x=data.index, y=data)
+plt.title("The Expected Booked Nights in 3 Months for Listings based on rating")
+plt.xlabel("Rating")
+plt.ylabel("Booked nights (next 3 months)")
+plt.show()
+
+```
+
+
+<br>
+
+#### What (Bedrooms, Room Type) combination have highest expected income average for the next 3 months?
+
+```{python}
+nBookedNightinNigh=romeListings.groupby(["room_type","bedrooms"])["expected_income_coming_3m"].agg(["mean","count"])
+temp=nBookedNightinNigh[nBookedNightinNigh["count"]>11]["mean"].sort_values(ascending=False).head(5)
+fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The highest Expected Income average of listings for every (Bedrooms, Room Type) combination", labels={
+	"y": "average income (next 3 months)",
+	"x": "(Bedrooms, Room Type)"
+})
+fig.show()
+```
+
+
+
+<br>
+
+#### What (Bedrooms, Room Type) combination have highest minimum income average for the past 12 months?
+
+```{python}
+nBookedNightinNigh=romeListings.groupby(["room_type","bedrooms"])["min_income_past_12m"].agg(["mean","count"])
+temp=nBookedNightinNigh[nBookedNightinNigh["count"]>11]["mean"].sort_values(ascending=False).head(5)
+fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The highest income average of listings for every (Room Type, Number of Bedrooms) combination", labels={
+	"y": "average minimum income of listings (past 12 months)",
+	"x": "(Room Type, Number of Bedrooms)"
+})
+fig.show()
+```
+
+
+
+<br>
+
+
+```{python}
+data = romeListings.groupby("bedrooms")["expected_income_coming_3m"].agg(["mean", "count"])
+data = data[data["count"]>11]["mean"].sort_values(ascending=False).head(10)
+fig = px.bar(x = data.index, y = data, title = "The highest Expected Income average of listings for every Bedrooms count", labels={
+	"y": "average income (next 3 months)",
+	"x": "Number of Bedrooms"
+})
+fig.show()
+```
+
+
+
+
+# Conclusion
+
+<br> 
+
+### To increase the profitabilty of your invesment in Rome:
+
+- Have a verification mark.
+- Have a profile picture.
+- Invest in the top neighbourhood: ‘II Centro Storico’.
+- Invest in the room type: Entire Home/Apt in ‘II Centro Storico’, with 6 bedrooms
+- Try not to exceed the average prices, might lead to bad Scores Value.
+- Try to response as quick as possible.
+- Provide an instant booking.
+- Include the following amenities: WiFi, Hair Dryer, … 
+
+
+<br>
+
+
+# Sources
+
+- http://insideairbnb.com/get-the-data/
+- http://insideairbnb.com/rome
+- https://python-visualization.github.io/folium/
