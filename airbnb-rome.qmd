@@ -638,69 +638,6 @@ ax = sns.kdeplot(romeListings[romeListings["host_response_time"]=="within an hou
 
 <br>
 
-### Bathrooms, Beds, Reviews and price
-
-```{python}
-eds = df2[[ 'price', 'number_of_reviews', ]]
-
-g = sns.pairplot(eds,
-                 aspect=1.2,
-                 diag_kws=dict(shade=True),
-                 diag_kind="kde", kind="reg")
-fig = g.fig 
-fig.subplots_adjust(top=0.93, wspace=0.3)
-fig.suptitle('Attributes Pairwise Plots', 
-              fontsize=14, fontweight='bold');
-
-sns.set(style="white")
-sns.relplot(x="price", y="bathrooms_text",
-            sizes=(40, 400), alpha=.8, palette="coolwarm",
-            height=10, data=df2)
-```
-
-
-
-<br>
-
-
-```{python}
-plt.figure(figsize=(15,8))
-sns.jointplot( x='number_of_reviews',y ='price',data = df2, kind = 'reg', color = 'pink' , space = 0.8, height = 9)
-plt.title('Number of reviews Against price', 
-              fontsize=12, fontweight='bold');
-```
-
-
-
-<br>
-
-
-```{python}
-sns.set(style="white")
-sns.relplot(x="room_type", y="price", size = 'beds',
-            sizes=(40, 400), alpha=.8, palette="coolwarm",
-            height=10, data=df2)
-```
-
-
-
-<br>
-
-
-```{python}
-# data = romeListings.groupby("rating_location_category")["min_income_past_12m"].mean().sort_values(ascending=False)
-# sns.barplot(x=data.index, y=data)
-# plt.title("The Average minimum income of listings based on location rating")
-# plt.xlabel("Rating")
-# plt.ylabel("average minimum income of listings (past 12 months)")
-# plt.show()
-```
-
-
-
-
-<br>
-
 ### Does the Location Rating effect the minimum income of listings (past 12 months)
 
 ```{python}
