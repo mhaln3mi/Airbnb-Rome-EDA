@@ -1,10 +1,15 @@
 ---
 title: "Airbnb Rome EDA"
+author: "Maan Al Neami,<br>  Nourah Almutairi,<br>  Ammar Alfaifi,<br> Salman Al-Harbi,<br>  Dina Alkhammash"
 format:
   html:
+    toc: true
+    toc-depth: 1
     code-fold: true
 kernel: python3
 ---
+
+<br><br>
 
 # Introduction:
 
