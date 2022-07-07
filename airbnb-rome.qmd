@@ -207,7 +207,7 @@ The highest mean price is in ```XIII Aurelia```, followed by ```I Centro Storico
 ### Amenities and Price
 
 
-What are the most frequent amenities in Roma listings?
+#### What are the most frequent amenities in Roma listings?
 
 ```{python}
 amenities = {}
@@ -223,10 +223,12 @@ fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Most Frequen
 fig.show()
 ```
 
+We can see that Wifi is the most frequent amenity in Roma's listings, followed bt Essentials, Hair dryer, and Long term stay. This amenities might be the basic or standard amenities that a vistor to Roma would want.
+
 
 <br>
 
-
+#### What is the average price for the most frequent Amenities?
 ```{python}
 amenities = {}
 for c in df.columns:
@@ -241,10 +243,12 @@ fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Average Pric
 fig.show()
 ```
 
+from the above graph we can see that listsings that have Air Conditioning, have the highest average price with 185.24
+
 
 <br>
 
-
+#### What are the most expensive Amenities?
 ```{python}
 amenities = {}
 
@@ -264,10 +268,10 @@ fig = px.bar(x = amenities.keys(), y = amenities.values(), title = "Average Pric
 fig.show()
 ```
 
-
+The most expensive listings amenity is Outdoor seating  with a 10.5K, followed by Piastre electric stove, Balcony, and Security cameras. 
 <br>
 
-
+#### What is the distribution of the most expensive Amenities?
 ```{python}
 amenities = {}
 
@@ -285,7 +289,7 @@ fig = px.bar(x = amenities_count.keys(), y = amenities_count.values(), title = "
 
 fig.show()
 ```
-
+We can see that only one listing has an outdoor seating and Piastre electric stove, while three listings have Balcony and two lsitings have security camera, although these amenities are in expensive listings they seems not to be frequent in Roma. 
 
 <br>
 
@@ -327,10 +331,10 @@ sns.countplot(x = rating_category)
 ```{python}
 value_category = pd.cut(df.review_scores_value,bins=[1, 2, 3, 4, 5, 6],labels=["Terrible","Bad","Okay","Good", "Great"], right=False)
 df['value_category'] = value_category
-sns.countplot(x = value_category)
+sns.countplot(x = value_category, data=df)
 ```
 
-
+It seems that in all three types of review's scores,Good is the most frequent one followed by 
 <br>
 
 ### Does the rating score effect the price
@@ -342,6 +346,7 @@ data = df.groupby("rating_category")["price"].mean()
 sns.barplot(x=data.index, y=data)
 ```
 
+It seems that there is no relation between review_scores_rating and price.
 
 <br>
 
@@ -687,9 +692,7 @@ plt.xlabel("Rating")
 plt.ylabel("average minimum income of listings (past 12 months)")
 plt.show()
 ```
-
-
-
+We can see that there is an upward trend that indicate, that listings with higher location review score had higher average minimum income for the past year.
 <br>
 
 
@@ -702,8 +705,9 @@ plt.ylabel("average minimum income of listings (past 12 months)")
 plt.show()
 ```
 
+We can see here also that Good and Great, both have higher average minimum income than the rest of the categories.
 
-
+What about the expected income for the next 3 months? let's check it out.
 <br>
 
 ### Does the Location Rating effect the expected average income (next 3 months)
@@ -717,7 +721,7 @@ plt.ylabel("average income (next 3 months)")
 plt.show()
 ```
 
-
+Frome the above figure, it looks like listings with Great location review score are expected to have the highest minimum income for the next three months.
 
 <br>
 
@@ -732,6 +736,7 @@ plt.show()
 
 ```
 
+It seems that listings with Great, Good or Okay location review score are expected to be booked more than the other categories for the next three months. 
 
 <br>
 
@@ -747,7 +752,7 @@ fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The
 fig.show()
 ```
 
-
+Listings that are an entire home or an apartment seems to be expected to have the highest income average for the next three months, and an entire home or an apartment with seven bedrooms are expected to have the highest income average with 65.5K
 
 <br>
 
@@ -763,6 +768,7 @@ fig = px.bar(x = list(map(str,list(temp.keys()))), y = temp.values, title = "The
 fig.show()
 ```
 
+From the above figure, it seems for the past year, listings that are an entire home or an apartment also have the highest income average for the past year, and an entire home or an apartment with seven bedrooms have the highest income average with 7.8K.
 
 
 <br>
@@ -778,6 +784,7 @@ fig = px.bar(x = data.index, y = data, title = "The highest Expected Income aver
 fig.show()
 ```
 
+We can see that listings with seven bedrooms are expected to have the highest average income for the next three months, followed by 8, 6 and 5 bedrooms.
 
 
 
@@ -790,7 +797,7 @@ fig.show()
 - Have a verification mark.
 - Have a profile picture.
 - Invest in the top neighbourhood: ‘II Centro Storico’.
-- Invest in the room type: Entire Home/Apt in ‘II Centro Storico’, with 6 bedrooms
+- Invest in the room type: Entire Home/Apt in ‘II Centro Storico’, with 7 bedrooms
 - Try not to exceed the average prices, might lead to bad Scores Value.
 - Try to response as quick as possible.
 - Provide an instant booking.
