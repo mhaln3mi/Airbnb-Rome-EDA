@@ -11,6 +11,10 @@ kernel: python3
 
 <br><br>
 
+
+
+
+
 # Introduction:
 
 In this report we will be analyzing Rome Airbnb properties dataset from inside airbnb and try to analyze it to find what variables influences the income generted by the property.
@@ -159,6 +163,8 @@ FastMarkerCluster(data=locations).add_to(map1)
 map1
 ```
 
+<br>
+
 As we can see, most of the listings are located in the city center.
 
 <br>
@@ -203,6 +209,22 @@ The highest mean price is in ```XIII Aurelia```, followed by ```I Centro Storico
 
 <br>
 
+Let's also look at the heatmap of the listings above 300 euro
+
+```{python}
+df_50 = df[df['price']>=300]
+
+
+map2=folium.Map([42,12],zoom_start=9.8)
+location = ['latitude','longitude']
+df_map = df_50[location]
+HeatMap(df_map.dropna(),radius=8,gradient={.4: 'blue', .65: 'lime', 1: 'red'}).add_to(map2)
+map2
+```
+
+<br>
+
+We also see here that the highest prices are in ```I Centro Storico```.  
 
 ### Amenities and Price
 
@@ -805,6 +827,19 @@ We can see that listings with seven bedrooms are expected to have the highest av
 
 
 <br>
+
+
+# Challenges
+
+In this project we faced some challenges, here is some of them:
+
+- Choosing a dataset based on cities.
+- A dataset with more than 70 columns, is not easy.
+- Cleaning the `amenities` column, into discrete values.
+- First time to use world map library.
+- Language and namings difficulties.
+- Estimating occupancy and income.
+
 
 
 # Sources
