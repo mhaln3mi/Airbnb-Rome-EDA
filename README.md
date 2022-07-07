@@ -4,7 +4,7 @@ Click [here](https://mhaln3mi.github.io/Airbnb-Rome-EDA/airbnb-rome.html) to vie
 
 ### Introduction:
 
-In this report we will be analyzing Rome Airbnb properties dataset from inside airbnb and try to analyze it to find what variables influences the income generted by the property. We got our dataset from [inside airbnb](http://insideairbnb.com/get-the-data/). Inside Airbnb is a project that provides data and advocacy about Airbnb's impact on residential communities. They provide data and information to empower communities to understand, decide and control the role of renting residential homes to tourists.
+In this report we will be analyzing Rome Airbnb properties dataset from inside airbnb and try to find what variables influences the income generted by the property. We got our dataset from [inside airbnb](http://insideairbnb.com/get-the-data/). Inside Airbnb is a project that provides data and advocacy about Airbnb's impact on residential communities. They provide data and information to empower communities to understand, decide and control the role of renting residential homes to tourists.
 
 
 ### Data dictionary
