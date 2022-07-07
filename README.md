@@ -35,3 +35,11 @@ In this report we will be analyzing Rome Airbnb properties dataset from inside a
 - folium
 - ast 
 
+
+
+# Sources
+
+- http://insideairbnb.com/get-the-data/
+- http://insideairbnb.com/rome
+- https://python-visualization.github.io/folium/
+
