@@ -1,6 +1,6 @@
 # Airbnb-Rome-EDA
 
-Click [here](https://mhaln3mi.github.io/Airbnb-Rome-EDA/airbnb-rome.html) to view the webpage
+[:link: Click here to view the webpage](https://mhaln3mi.github.io/Airbnb-Rome-EDA/airbnb-rome.html)
 
 ### Introduction:
 
@@ -34,4 +34,12 @@ In this report we will be analyzing Rome Airbnb properties dataset from inside a
 - plotly
 - folium
 - ast 
+
+
+
+# Sources
+
+- http://insideairbnb.com/get-the-data/
+- http://insideairbnb.com/rome
+- https://python-visualization.github.io/folium/
 
