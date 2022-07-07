@@ -76,12 +76,14 @@ from folium.plugins import HeatMap
 from ast import literal_eval
 from plotly.subplots import make_subplots
 
+plt.style.use('seaborn')
+plt.rcParams['figure.figsize'] = (10, 5)
+plt.rcParams['figure.dpi'] = 150
 
 df = pd.read_csv('data/listings.csv')
 df2 = pd.read_csv('data/listings-detailed.csv')
 
 df.head(5)
-
 ```
 
 <br>
@@ -143,8 +145,14 @@ df = df.join(df2[["review_scores_rating", "review_scores_accuracy", "review_scor
 Here we want to see how many listings we have per `neighbourhood`
 
 ```{python}
-dist_plt = df['neighbourhood'].value_counts().nlargest(5).plot.bar()
-plt.xticks(rotation = 30)
+data = df.groupby('neighbourhood')['id'].count().sort_values(ascending=False).nlargest(5)
+sns.barplot(x=data.index, y=data)
+plt.title('the enumber of lisitings by neighbourhood'.title())
+plt.xlabel('Neighbourhood')
+plt.ylabel('Count')
+for i in range(len(data)):
+    plt.text(i, data[i], data[i], ha='center')
+plt.show()
 ```
 
 We can see from this fig above that most of the listings in our dataset are located at ```I Centro Storico```.
@@ -173,7 +181,7 @@ As we can see, most of the listings are located in the city center.
 Next we want to see the distribution of listings type in the dataset
 
 ```{python}
-df['room_type'].value_counts().plot(kind = 'bar', color = ['g', 'r', 'b', 'y'])
+df['room_type'].value_counts().plot(kind = 'bar')
 plt.title('Listings type count')
 plt.xticks(rotation = 30)
 ```
